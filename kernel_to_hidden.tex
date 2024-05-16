@@ -58,12 +58,11 @@ If each output of a kernel is bounded between 0 and 1, through sigmoid activatio
 \begin{equation}
 \begin{aligned}
 S_i &= \sum_{k_i=1}^{n_i} f_i x^2_{k_i}, \\
-x^2 &= \sum_{i=1}^{N} S_i + 2 \sum_{j=i+1}^{N} \sqrt{S_i S_j} \cos{\phi_{ij}}.
+x^2 &= \sum_{i=1}^{N} \left( S_i + 2 \sum_{j=i+1}^{N} \sqrt{S_i S_j} \cos{\phi_{ij}} \right).
 \end{aligned}
 \label{eq:kernsum}
 \end{equation}
 Here, the indices $i$ and $j$ run over a total of $N$ unique combinations of kernel type--kernel qubit index pairs, \eg, $N=5$ for qubit 25, and the indices $k_i$ run over the evaluations of this unique combination $i$ in $n_i$ different strides, \eg, for contribution type $(5,5)$ to qubit 25, $k_i$ can only be 1, but it runs up to $n_i=2$ for all other contribution types.
-The values of $N$ and $n_i$ satisfy the relationship $\sum_{i=1}^{N} \sum_{k_i=1}^{n_i} 1 = d^2$.
 
 In constructing $S_i$, we assume that evaluations of the same combination $i$ have an underlying complex representation with the same overall phase, but $S_i$ values with different indices $i$ do not have to carry the same phase, which justifies the phase difference parameters $\cos{\phi_{ij}}$.
 The fractions $f_i$ are subject to the constraint $\sum_{i=1}^{N} f_i = 1$, so they can be parametrized using recursive fractions, which would satisfy the constraint by construction and avoid a spurious parameter, \ie, through the mapping $f_1 \to f_1$, $f_i \to f_i\prod_{j=1}^{i-1}\left(1-f_j\right)$ for $1<i<N$, and $f_N \to \prod_{j=1}^{N-1}\left(1-f_j\right)$. Both these fractions and the phase parameters $\cos{\phi_{ij}}$ are included as unique sets of weights between 0 and 1 to be determined during NN training.
