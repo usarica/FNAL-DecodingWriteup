@@ -16,7 +16,7 @@ In the example shown for a $d=7$ code in Fig.~\ref{fig:d7wkern}, all of the disp
 
 Kernels assume uniform noise to maximize the number of weights shared. Symmetries are broken in kernel types that evaluate et the boundary of the surface code. For that reason, all of the weights become unique, and these kernels have 9 outputs. In the only kernel type that does not evaluate at any boundary, only the weights that are associated with kernel qubits \kernum{1}, \kernum{2}, \kernum{3}, \kernum{5}, \kernum{6}, and \kernum{9} are unique, and this kernel has 6 outputs instead of 9.
 
-The kernels displayed in Fig.~\ref{fig:d7wkern} surround qubit 25, the only qubit that can be shared exclusively by kernels of the last type, and we will use this qubit as an example to explain the translation of kernel outputs. Here, the six kernels colored in red, blue, green, magenta, and cyan contribute to the prediction for an error in this qubit with outputs that correspond to kernel qubit positions \kernum{5}, $\kernum{4}\equiv\kernum{6}$, \kernum{6}, $\kernum{8}\equiv\kernum{2}$, and \kernum{2}, respectively. For that reason, these contributions can be encoded as a list of ordered binary integers as $\{(5,2)^2, (5,5), (5,6)^2\}$, with the first integer in each pair corresponding to the unique type of the contributing kernel, the second one marking the contributing kernel qubit position, and the exponent indicating the number of occurrence of this pair. The number of such unique contributions and the total count of associated parameters are listed in Table~\ref{table:unique-kern-contribs}.
+The kernels displayed in Fig.~\ref{fig:d7wkern} surround qubit 25, the only qubit that can be shared exclusively by kernels of the last type, and we will use this qubit as an example to explain the translation of kernel outputs. Here, the nine kernels colored in red, blue, dark green, magenta, cyan, pink, light green, brown, and orange contribute to the prediction for an error in this qubit with outputs that correspond to kernel qubit positions \kernum{5}, $\kernum{4}\equiv\kernum{6}$, \kernum{6}, $\kernum{8}\equiv\kernum{2}$, \kernum{2}, $\kernum{9}\equiv\kernum{1}$, $\kernum{7}\equiv\kernum{3}$, \kernum{3}, and \kernum{1} respectively. For that reason, these contributions can be encoded as a list of ordered binary integers as $\{(5,1)^2, (5,2)^2, (5,3)^2, (5,5), (5,6)^2\}$, with the first integer in each pair corresponding to the unique type of the contributing kernel, the second one marking the contributing kernel qubit position, and the exponent indicating the number of occurrence of this pair. The number of such unique contributions and the total count of associated parameters are listed in Table~\ref{table:unique-kern-contribs}.
 
 %%%%%%%%%%%%%
 \begin{table}[htbp]
@@ -32,14 +32,14 @@ The kernels displayed in Fig.~\ref{fig:d7wkern} surround qubit 25, the only qubi
 $d$ & ~~~$C$ & Fractions & Phases & ~~~$C$ & Fractions & Phases  \\
 \hline
 4 & ~~~4 & 5 & 8 & ~~~- & - & - \\
-5 & ~~~14 & 31 & 68 & ~~~- & - & - \\
-6 & ~~~11 & 38 & 122 & ~~~9 & 16 & 28 \\
-7 & ~~~33 & 132 & 425 & ~~~27 & 99 & 320 \\
-8 & ~~~22 & 95 & 315 & ~~~19 & 110 & 562 \\
-9 & ~~~33 & 132 & 425 & ~~~54 & 403 & 2413 \\
-10 & ~~~22 & 95 & 315 & ~~~35 & 320 & 2294 \\
-11 & ~~~33 & 132 & 425 & ~~~89 & 883 & 6412 \\
-12 & ~~~22 & 95 & 315 & ~~~54 & 574 & 4315 \\
+5 & ~~~13 & 28 & 62 & ~~~- & - & - \\
+6 & ~~~9 & 27 & 80 & ~~~9 & 16 & 28 \\
+7 & ~~~25 & 86 & 262 & ~~~25 & 88 & 272 \\
+8 & ~~~16 & 59 & 182 & ~~~16 & 84 & 400 \\
+9 & ~~~25 & 86 & 262 & ~~~41 & 268 & 1504 \\
+10 & ~~~16 & 59 & 182 & ~~~25 & 194 & 1272 \\
+11 & ~~~25 & 86 & 262 & ~~~61 & 522 & 3554 \\
+12 & ~~~16 & 59 & 182 & ~~~36 & 328 & 2282 \\
 \hline
 \label{table:unique-kern-contribs}
 \end{tabular}
@@ -53,7 +53,7 @@ S_i &=& \sum_{k_i=1}^{n_i} f_i x^2_{k_i} \\
 x^2 &=& \sum_{i=1}^{N} S_i + 2 \sum_{j=i+1}^{N} \sqrt{S_i S_j} \cos{\phi_{ij}}.
 \label{eq:kernsum}
 \end{eqnarray}
-Here, the indices $i$ and $j$ run over a total of $N$ unique contributions, \eg, $N=3$ for qubit 25, and the indices $k_i$ run over $n_i$ different kernel evaluations of the unique combination $i$ of the kernel type and the kernel qubit index, \eg, for contributions of types $(5,2)$ and $(5,6)$ to qubit 25, $k_i$ runs from 1 to 2, but it only has a single value, 1, for type $(5,5)$.
+Here, the indices $i$ and $j$ run over a total of $N$ unique contributions, \eg, $N=5$ for qubit 25, and the indices $k_i$ run over $n_i$ different kernel evaluations of the unique combination $i$ of the kernel type and the kernel qubit index, \eg, for contribution type $(5,5)$ to qubit 25, $k_i$ can only be 1, but for all other contribution types it runs from 1 to 2.
 The fractions $f_i$ are subject to the constraint $\sum_{i=1}^{N} f_i = 1$, so they can be parametrized using recursive fractions, which would satisfy the constraint by construction and avoid a spurious parameter, \ie, through the mapping $f_1 \to f_1$, $f_i \to f_i\prod_{j=1}^{i-1}\left(1-f_j\right)$ for $1<i<N$, and $f_N \to \prod_{j=1}^{N-1}\left(1-f_j\right)$. Both these fractions and the parameters $\cos{\phi_{ij}}$ are to be handled as unique sets of weights between 0 and 1 to be determined during NN training.
 
 The final probability $p$ computed from the output of all kernels could simply be found from the inverse transformation on $x$, \ie, $p=\frac{x^2}{1+x^2}$, but as a further input to the higher hierarchy of layers, we keep it untransformed as $x^2$. Since there are $d^2$ such values, corresponding to each physical data qubit, leaving $x^2$ as it is adds flexibility for the NN to learn nonuniform noise at the level of higher layers.
