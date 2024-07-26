@@ -1,15 +1,91 @@
-\section{Kernel construction for convolutions}
+\section{Kernel construct for convolutions}
 
-\subsection{Simple case with $r=2$ error correction cycles}
+\subsection{Surface code kernels and symmetry considerations}
+\label{sec:kernels}
 
-\subsection{Representation of measure qubit state changes when $r\geq 3$}
+
+With ideal weight initialization and activation functions across its layers, a multilayer perceptron from the $(d^2-1)\times r$ inputs of a QEC cycle should always provide the optimal predictions for the probabilities of the error states of logical observables. The size of such a network grows at best linearly with both $d^2$ and $r$, so larger-distance surface codes, or QEC cycles with more rounds, become infeasible to implement in hardware acceleration devices. The purpose of defining kernels for a convolutional NN structure is to keep the growth of the number of NN parameter in spatial dimensions fixed by sharing weights explicitly as the kernels are evaluated across their stride through the full surface code. The approach described in this paper uses smaller surface codes of distance $k$ as kernels and defines a rule to combine their output; in this way, the growth of the NN along spatial dimensions is fixed at $\Order(k^n)$ in spatial dimensions, with a fixed integer $n=4$ or 6 depending on the representation of the relationship between the inputs and the outputs of the kernel, see more discussion on this point in Section~\ref{sec:kernels-r2}.
+Odd-$k$ kernels are the only ones that can provide total coverage for both odd- and even-$d \geq k$ surface codes, and $k=3$ keeps the number of NN parameters minimal while providing sufficient error decoder performance.
+
+In typical image recognition applications, pixels are arranged in a regular grid, and edge effects on smearing are usually ignored. In our case, however, noise mechanisms are more complex, with single-qubit operations affecting data and measure qubits independently, and two-qubit operations causing correlated errors between data and measure qubits. For this reason, we cannot ignore edge effects (or lack thereof). In a surface code with no holes, accounting for edges would necessitate the use of 5 different kernels. As illustrated on the left panel of Fig.~\ref{fig:ktypes}, we would classify these kernels as type-0 for facing both top and left edges of the surface code, type-1 for facing only the top edge of the surface code, type-2 for facing both top and right edges of the surface code, type-3 for facing only the left edges of the surface code, and type-4 for being fully immersed in the surface code with full connectivity to other data and measure qubits at the kernel boundaries. We note that strides of kernel evaluations along the bottom or right edges (bottom right and bottom left corners) of the surface code are equivalent to evaluating type-1 and type-3 (type-0 and type-2) kernels with the order of inputs and outputs rotated by $180\degrees$, and that moving the same kernel type one step in measure and data qubits up/down or left/right for the evaluation of the next stride in these directions requires mirroring the order of inputs and outputs along either the vertical or horizontal direction -- we choose the former in our implementation. We further note that even-$d$ surface codes cannot have type-2 kernels as the arrangement of measure qubits in these surface codes is such that the top right corner is identical in edge conditions to the flipped configuration of the type-0 kernel. The simplest such even-$d$ surface code that can be evaluated through $k=3$ kernels is a $d=4$ surface code, and the different strides over the only type-0 kernel needed for this surface code is illustrated on the right panel of Fig.~\ref{fig:ktypes}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=0.45\textwidth]{kernel_types.pdf}
+\includegraphics[width=0.45\textwidth]{d4_kernels.pdf}
+\ccaption
+{Kernel types}
+{
+Illustrated over a $d=9$ surface code on the left are the five types of kernels used in this paper, displayed using boundaries with different colors (type-0: red, type-1: green, type-2: blue, type-3: cyan, and type-4: purple). The types are based on whether the kernel edges face a boundary of the full surface code or other data qubits. The green kernel is shown in flipped configuration while the others are in standard arrangement.
+The overlap of single-step kernel strides are illustrated on the right over a $d=4$ surface code. In this case, the type of the kernels used in each stride is the same (type-0, \ie, red kernel on the left panel), and the boundaries with different colors only highlight the strides. The strides are constructed using standard (red and gold strides) or flipped (blue and green) configurations with either a 180\degrees{}-rotation (gold, green) or none (red, blue).
+In both panels, the data and measure qubits are shown with color-coded circles and are marked with letters `D' (data qubits, gray), `X' (measure-$X$ qubits, blue), or `Z' (measure-$Z$ qubits, gold).
+}
+\label{fig:ktypes}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+While error probabilities at each data or measure qubit may not be distributed uniformly in hardware, we assume uniformity across the symmetry axes of the kernels or the evaluations of the same kernel type at different strides in order to encode the fundamental spatial symmetries of the surface code and reduce the number of free parameters of the model. As kernels provide basic relationships between the stabilizer measurements over the measure qubits and the error states of the data qubits at a fundamental level, regardless of how the input over the measure qubit readings is represented or whether there are any hidden layers, symmetries within the kernel can, therefore, also be considered to reduce the number of parameters even further. In the cases we consider, type-4 kernels are symmetric for a $180\degrees$-rotation, so the relations between measure and data qubits should also be established as such. These relations are illustrated in an abstract way in Fig.~\ref{fig:t4kernslsym}, where one could conceptualize the displayed relationships $\mathcal{R}_{ij}$ in a simple way as NN weights that are shared between the data qubits according to the present rotational symmetry and are multiplied by a different ordered vector of measure qubit readouts to produce the same kernel output dimensionality as the other kernel types. As will be discussed in Section~\ref{sec:kernels-r2}, our architecture implements a quadratic polynomial over the stabilizer measurements, but the symmetry relationships follow the same abstract relationship.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=0.6\textwidth]{symmetric_kernel_output_relation.pdf}
+\ccaption
+{Symmetries in the input--output relations of the type-4 kernel}
+{
+The relations are illustrated in a $k=3$ kernel. Each measure qubit is represented with a circle that is filled with a different color while the data qubits are represented with gray-filled circles. The weights used in evaluating the relationship of each data qubit to the measure qubits is denoted in an abstract way through the symbols $\mathcal{R}_{ij}$, where index $i$ is the index of the output, and index $j$ is the index of the position of the ordered input passed. One should note that the allowed values of $i$ only go up to 5 because of the symmetrization of weights even though there are 9 data qubits in the kernel, with relations only for $i=4$ being unique. The small filled circles around the data qubits color-code how the input order in these relationships match the physical measure qubit positions.
+}
+\label{fig:t4kernslsym}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\subsection{Input representation for $r \leq 2$}
+\label{sec:kernels-r2}
+
+In assessing whether an error occurred in data qubits or measure qubits, it is important to examine stabilizer measurements and their changes over successive rounds, and correlate these changes spatially. Since stabilizer measurements and detector events are a series of 0s and 1s, one can encode pairwise correlations across spatial and temporal directions using a quadratic representation over the inputs.
+
+For $k=3$, we find a quadratic representation sufficient to encode the correlations over $r \leq 2$ rounds.
+The quadratic representations of the stabilizer measurements and detector events are kept disjoint in the architecture via different embedding layers, and each kernel type constructs its own independent embedders, \ie, each kernel type maintains an independent set of trainable embedding weights:
+\begin{itemize}
+\item Stabilizer measurement embedding: For distinct bits $m_i$ and $m_j$, the quadratic representation is computed as
+\begin{equation}
+\begin{aligned}
+b_{ij}&=(m_i+1) \cdot (m_j+1) - 2 \\
+q_{ij}&=(p_{ij}+1)/2 \\
+r_{ij}&=-q_{ij} \cdot b^2_{ij} + q_{ij} \cdot b_{ij}+ p_{ij},
+\end{aligned}
+\end{equation}
+where $p_{ij}$ are $p$-like NN parameters, and $r_{ij}$ is the result of the quadratic correlation of the bits at positions $i$ and $j$. In this way, when both $m_i$ and $m_j$ are 0 or 1, $r_{ij}=-1$, and when they are different, $r_{ij}=p_{ij}$. Because the actual values of stabilizer measurements are not informative, we do not include quadratic representations for the $i=j$ diagonal terms.
+\item Detector event embedding: For distinct bits $e_i$ and $e_j$, the quadratic representation is computed as
+\begin{equation}
+\begin{aligned}
+b_{ij}&=(e_i+1) \cdot (e_j+1) - 2 \\
+q^{(0)}_{ij}&=\left(p_{ij}\cdot\left(x_{ij}+1 \right)-1\right)/2 \\
+q^{(+)}_{ij}&=x_{ij}/6 \\
+r_{ij}&=(-q^{(0)}_{ij}+q^{(+)}_{ij}-1/3) \cdot b^2_{ij} + (q^{(0)}_{ij}+q^{(+)}_{ij}+2/3) \cdot b_{ij}+ 2 \cdot q^{(0)}_{ij},
+\end{aligned}
+\end{equation}
+where $p_{ij}$ and $x_{ij}$ are $p$-like and $x$-like NN parameters, respectively, and $r_{ij}$ is again the result of the quadratic correlation of the bits at positions $i$ and $j$. Using this representation, $r_{ij}=-1$ if $e_i=e_j=0$, $r_{ij}=x_{ij}$ if $e_i=e_j=1$, and $r_{ij}=p_{ij}\cdot\left(x_{ij}+1 \right)-1$ otherwise, thereby bounding the values flexibly between -1 and $x_{ij}$. When the quadratic representation of the stabilizer measurements include correlation terms across consecutive rounds, we do not include the diagonal terms for $i=j$; when this is not the case, the bits are simply mapped as $0\to -1$ and $1\to1$ for these diagonal terms.
+\end{itemize}
+
+We should note that considerations for symmetry in type-4 kernels, discussed in Section~\ref{sec:kernels}, also apply to embedding layers. In this case, however, the embedding weights are those that need to respect a $180\degrees$-rotation. Our architecture accounts for this symmetry consideration as well to maximize the sharing of NN weights.
+
+After the kernel input is passed through the embedding layers, the kernel output is determined through a single, dense layer of weights over the output of these embedders. Referring to the kernel types mentioned in Section~\ref{sec:kernels}, kernels of types 0--3 have $k^2$ outputs whereas type-4 kernels have $(k^2+1)/2$ outputs, remapped to $k^2$ outputs based on symmetry considerations.
+
+
+\subsection{Input representation for $r\geq 3$}
+\label{sec:kernels-r3}
 
 Under noiseless conditions, measure qubits are expected to remain in the same state at each error correction cycle.
-In the series of measurements of a measure qubit, a single bit flip such as in a measurement sequence $0001000$ of $r=7$ cycles would result more likely from an error in the measure qubit than two consecutive errors in a data qubit, which would also be correlated with the sequence of another measure qubit. A sequence of $0001011$, on the other hand, is more likely to indicate a data qubit error, followed by an error in the measure qubit, than three errors in the measure qubit itself. These cases can be represented easily by checking the consistency of measure qubit states with their measurement in a previous round through the detection event formalism~\cite{Gidney:2021,Higgott:2023}. Until the final round in which the consistency of measure qubit states with those of the data qubits that surround them is checked, the detection events for these two example sequences would be $001100$ and $001110$, respectively, with an odd parity potentially signaling data qubit errors.
+In the series of measurements of a measure qubit, a single bit flip such as that in a measurement sequence $0001000$ of $r=7$ cycles would result more likely from an error in the measure qubit than two consecutive errors in a data qubit, which would also be correlated with the sequence of another measure qubit. A sequence of $0001011$, on the other hand, is more likely to indicate a data qubit error, followed by an error in the measure qubit, than three errors in the measure qubit itself. These cases can be represented easily by checking the consistency of measure qubit states with their measurement in a previous round through the detector event formalism~\cite{Gidney:2021,Higgott:2023,Bausch:2023jgi}. Until the final round in which the consistency of measure qubit states with those of the data qubits that surround them is checked, the detector events for these two example sequences would be $001100$ and $001110$, respectively, with an odd parity potentially signaling data qubit errors.
 
-There are, however, cases where an odd parity in detection events might be ambiguous to interpret on their own. Take for example the sequence $1000000$ of measure qubit states. In this case, an error could have occurred in an adjacent data qubit between rounds 1 and 2, or the first measurement of the measure qubit might have been erroneous. In both cases, correlations with the states of other measure qubits would need to be checked, and with additional errors in these states, frame shifts in where correlated errors occur could be possible.
+There are, however, cases where an odd parity in detector events might be ambiguous to interpret on their own. Take for example the sequence $1000000$ of measure qubit states. In this case, an error could have occurred in an adjacent data qubit between rounds 1 and 2, or the first measurement of the measure qubit might have been erroneous. In both cases, correlations with the states of other measure qubits would need to be checked, and with additional errors in these states, frame shifts in where correlated errors occur could be possible.
 
-When there are three or more rounds of measurements, one can access a representation of the evolution of states that can be interpreted probabilistically so that this representation can be used in a recurrent architecture. In order to do so, we need to define a raw state and an algorithm for the evolution of this state based on a moving window of triplets of measure qubit states:
+When there are three or more rounds of measurements, one can access a representation of the evolution of states that can be interpreted probabilistically; this representation can be used in a recurrent architecture that takes triplets of stabilizer measurements (doublets of detector events) as input in layers that ensure recurrent behavior. In order to do so, we need to define a stabilizer triplet state and an algorithm for the evolution of this state based on a moving window of triplets of measure qubit states:
 \begin{itemize}
 \item At the beginning of each error correction cycle, measure qubits start with a state $s=-1$ and a change vector $v=1$.
 \item If the window of triplets contains identical measurements, $s$ and $v$ do not change.
@@ -32,12 +108,7 @@ For illustration, here are a few examples of triplet state evolutions from measu
 \item Measurements: $100010001$; states: $0,0,1,1,0,0,-1$.
 \item Measurements: $100011001$; states: $0,0,1,0,-1,0,1$.
 \end{itemize}
-An example set of such states and accompanying detection events are also displayed in Fig.\ref{fig:d5r5states} for a $d=5$ code with $r=5$ rounds.
-
-When converting the ensemble of states at each round into an embedded input vector of probabilities, we consider pairs of $(s_i, s_j)$ with all $j\leq i$ ($m^2(m^2-1)/2$ pairs for a distance-$m$ code). When $i=j$, \ie, $(s_i, s_i)\equiv s_i$, the probabilities 1, $p_i$, and 0 are assigned to states 1, -1, and 0, respectively. For $i \neq j$, the probabilities 1, $p_{ij,1}$, $p_{ij,1} \times p_{ij,2}$, $p_{ij,1} \times p_{ij,2} \times p_{ij,3}$, $p_{ij,1} \times p_{ij,2} \times p_{ij,3} \times p_{ij,4}$, and 0 are assigned to the permutation of states (1,1), (1,0), (1,-1), (0,0), (0,-1), and (-1,-1), respectively. Here, the parameters $p_i$ and $p_{ij,\mu}$ are unique to each pairing of states, and they are intended to be determined during the training of the neural network. In order to avoid the scaling of the number of parameters by a leading factor of $d^4$, we construct this embedding for each kernel separately, \i.e., $m=k$, which is a fixed number, instead of $d$, which could be significantly larger than $k$.
-
-
-
+An example set of such triplet states and accompanying detector events are also displayed in Fig.\ref{fig:d5r5states} for a $d=5$ code with $r=5$ rounds.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[htb]
@@ -45,13 +116,22 @@ When converting the ensemble of states at each round into an embedded input vect
 \includegraphics[width=0.9\textwidth]{states_d5_r5_event0.pdf} \\
 \includegraphics[width=0.9\textwidth]{det_evts_d5_r5_event0.pdf}
 \ccaption
-{Measure qubit raw states and detection events for $d=5$, $r=5$}
+{Measure qubit triplet states and detector events}
 {
+Displayed are the raw triplet states (top) and detector events (bottom) that are constructed from $r=5$ rounds of stabilizer measurements over the 24 measure qubits of a $d=5$ code. The horizontal axis in both panels is divided by dotted lines for each measure qubit, and the 3 (4) successive triplet states (detector events) are coded with different colors. The triplet states are interpreted as no error ($s=-1$), possible error ($s=0$), and certain error ($s=1$). Detector events are interpreted as having no detection ($e=0$) or having detected an error ($e=1$).
 }
 \label{fig:d5r5states}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+When converting the ensemble of states at each round into an embedded input vector of probabilities, we consider pairs of $(s_i, s_j)$ with all $j\leq i$ ($m^2(m^2-1)/2$ pairs for a distance-$m$ code). This quadratic embedding representation replaces the stabilizer measurement embedder discussed in Section~\ref{sec:kernels-r3} while keeping the detector event embedder and the succeeding dense layer, which produces the final kernel output, the same. When $i=j$, \ie, $(s_i, s_i)\equiv s_i$, the probabilities 1, $p_i$, and 0 are assigned to states 1, 0, and -1, respectively. For $i \neq j$, the probabilities
+1,
+$p_{ij,1}$,
+$p_{ij,1} \times p_{ij,2}$,
+$p_{ij,1} \times \left(p_{ij,3} + p_{ij,2} \times \left(1-p_{ij,3}\right)\right)$,
+$p_{ij,1} \times \left(p_{ij,4} + p_{ij,2} \times \left(1-p_{ij,4}\right)\right)$,
+and 0
+are assigned to the permutation of states (1,1), (1,0), (0,-1), (1,-1), (0,0), and (-1,-1), respectively.
+Here, the parameters $p_i$ and $p_{ij,\mu}$ are trainable $p$-like NN parameters. In order to avoid the scaling of the number of parameters by a leading factor of $d^4$, we construct this embedding for each kernel separately, \ie, $m=k$, which is a fixed number, instead of $m=d$, which could be significantly larger than $k$. As in other embedding layers, these parameters are also required to respect the rotational symmetry of the type-4 kernels.
 
-
-\subsection{Recurrent convolutional kernel architecture for $r\geq 3$}
+The probabilistic output $\vec{p}$ of this triplet state embedder is converted to $2\vec{p}-1$ and combined with the output of the detector event embedder before passing through the dense layer of a kernel for final kernel output processing. We will see further in Section~\ref{sec:rcnn} how the triplet state embedder is placed within the recurrent NN structure.

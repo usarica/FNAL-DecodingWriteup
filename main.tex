@@ -26,14 +26,15 @@
 \linenumbers
 
 
-\title{Recurrent convolutional decoding of surface codes with minimal neural network architectures}
+\title{A compact, recurrent, and convolutional neural network decoder for surface codes}
 
 \author{Ula{\c s}can Sar{\i}ca\orcid{0000-0002-1557-4424}}
 \affiliation{University of California, Santa Barbara\\Santa Barbara, CA, USA}
 
-\emailAdd{usarica@ucsb.edu}
+\emailAdd{ulascan90@gmail.com}
 
 \abstract{
+Recent approaches to quantum error decoding include dedicated neural network architectures. They have been shown to outperform algorithmic approaches in accuracy, and come with the potential capability to learn complex qubit readout parameters. Running these architectures on hardware acceleration devices such as FPGAs, GPUs, and other specialized ASICs is needed for fast quantum error correction cycles, so the mathematical representation and number of parameters used in the nerual network need to be as compact as possible. In this work, we demonstrate a recurrent, convolutional neural network decoder that can run on surface codes using a compact architecture that exploits the rotational and translational symmetries of the qubit layout. For any distance $d \geq 7$, this compact architecture requires the same, fixed number of parameters to represent the error states of each round in an error correction cycle, and it features a final decoder layer that scales with $d^2$ to convert the state representation to error predictions on logical observables. Through this representation, we reach error decoding accuracies comparable to other algorithmic approaches in the literature for $d=5$ and $7$ surface codes with only about 100,000 parameters. Together with the inclusion of information from qubit readout, this compact architecture therefore presents itself as a viable option for implementing in hardware acceleration devices in the future.
 }
 
 
@@ -42,13 +43,18 @@
 \maketitle
 \flushbottom
 
-
+\include{intro}
 
 \include{kernel_construction}
 
 \include{kernel_to_hidden}
 
 \include{rcnn}
+
+
+
+\bibliographystyle{JHEP}
+\bibliography{main.bib}
 
 
 \end{document}
