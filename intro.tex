@@ -13,6 +13,7 @@ Within these limitations, minimal settings in our NN architecture can reduce the
 Throughout the rest of the paper, we will use the following glossary when describing the components of the neural and relating them to a QEC workflow:
 \begin{itemize}
 \item Round: A single, complete set of stabilizer measurements over the circuit that only leaves logical observables as additional degrees of freedom.
+Note that we may occasionally use jargon like ``time-step'' or ``over time'' and the unit of time being used, unless stated otherwise explicitly, is the passage of a round.
 \item Cycle: A set of stabilizer measurement rounds upon which either error correction is applied (or errors are tracked) or the data qubits are measured. We will reserve the symbol $r$ to refer to the total number of rounds in a cycle.
 \item Kernel distance, $k$: The distance of the underlying surface code that is used in the convolution kernels of the NN architecture. The kernel construct is described in Section~\ref{sec:kernels}, and we will use the value $k=3$ for most of the discussion in this paper.
 \item Surface code with distance $d$: When referring to surface codes, we will explicitly refer to rotated surface codes~\cite{Bombin:2007}. While the implementation of our NN architecture assumes this configuration, future investigations could easily account for unrotated surface codes or other structured codes, \eg, the more general class of low-density parity-check codes, using similar concepts.

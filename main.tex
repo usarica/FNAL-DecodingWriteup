@@ -14,6 +14,10 @@
 
 \usepackage{enumerate}
 
+\usepackage{algorithm}      % if you want to use the Algorithm environment
+\usepackage{algpseudocode}  % if you want to use the Algorithm environment
+
+
 \graphicspath{
 {Figures/}
 }
@@ -22,6 +26,7 @@
 \newcommand{\orcid}[1]{\href{https://orcid.org/#1}{\orc}}
 \newcommand{\kernum}[1]{\ensuremath{#1^\prime}\xspace}
 
+\newcommand{\type}[1]{\texttt{type-#1}}
 
 \linenumbers
 
@@ -34,7 +39,8 @@
 \emailAdd{ulascan90@gmail.com}
 
 \abstract{
-Current approaches to quantum error decoding include dedicated neural network architectures. They have been shown to outperform algorithmic approaches in accuracy, and come with the potential capability to learn complex qubit readout parameters. Running these architectures on hardware acceleration devices such as FPGAs, GPUs, and other specialized ASICs is needed for fast quantum error correction cycles, so the mathematical representation and number of parameters used in the neural network need to be as compact as possible. In this work, we demonstrate a recurrent, convolutional neural network decoder that can run on surface codes using a compact architecture that exploits the rotational and translational symmetries of the qubit layout. For any distance $d \geq 7$, this compact architecture requires the same, fixed number of less than 100,000 parameters to represent the error states of each round in an error correction cycle, and it features a final decoder layer that scales with $d^2$ to convert the state representation to error predictions on logical observables. Through this representation, we reach error decoding accuracies comparable to some of the other algorithmic approaches in the literature for $d=5$ surface codes, with tests of $d=7$ codes also indicating competitive promise. Together with the inclusion of information from qubit readout, this compact architecture therefore presents itself as a viable option for implementing in hardware acceleration devices in the future.
+Current approaches to quantum error decoding include dedicated neural network architectures.
+They have been shown to outperform algorithmic approaches in accuracy, and come with the potential capability to learn complex qubit readout parameters. Running these architectures on hardware acceleration devices such as FPGAs, GPUs, and other specialized ASICs is needed for fast quantum error correction cycles, so the mathematical representation and number of parameters used in the neural network need to be as compact as possible. In this work, we demonstrate a recurrent, convolutional neural network decoder that can run on surface codes using a compact architecture that exploits the rotational and translational symmetries of the qubit layout. For any distance $d \geq 7$, this compact architecture requires the same, fixed number of less than 100,000 parameters to represent the error states of each round in an error correction cycle, and it features a final decoder layer that scales with $d^2$ to convert the state representation to error predictions on logical observables. Through this representation, we reach error decoding accuracies comparable to some of the other algorithmic approaches in the literature for $d=5$ surface codes, with tests of $d=7$ codes also indicating competitive promise. Together with the inclusion of information from qubit readout, this compact architecture therefore presents itself as a viable option for implementing in hardware acceleration devices in the future.
 }
 
 
