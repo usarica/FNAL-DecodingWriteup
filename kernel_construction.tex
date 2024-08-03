@@ -102,37 +102,33 @@ Until the final round in which the consistency of measure qubit states with thos
 There are, however, cases where an odd parity in detector events might be ambiguous to interpret on their own. Take for example the sequence $1000000$ of measure qubit states. In this case, an error could have occurred in an adjacent data qubit between rounds 1 and 2, or the first measurement of the measure qubit might have been erroneous. In both cases, correlations with the states of other measure qubits would need to be checked, and with additional errors in these states, frame shifts in where correlated errors occur could be possible.
 
 When there are three or more rounds of measurements, one can access a representation of the evolution of states that can be interpreted probabilistically; this representation can be used in a recurrent architecture that takes triplets of stabilizer measurements (doublets of detector events) as input in layers that ensure recurrent behavior. 
-In order to do so, we need to define a stabilizer triplet state and an algorithm for the evolution of this state based on a moving window of triplets of measure qubit states --- see Algorithm \ref{alg:state_evolution} for the subroutine used to produce the states. Note this algorithm also computes a set of change values that are used for internal book-keeping and then discarded.
-% \begin{itemize}
-% \item At the beginning of each error correction cycle, measure qubits start with a state $s=-1$ and a change vector $v=1$.
-% \item If the window of triplets contains identical measurements, $s$ and $v$ do not change.
-% \item Otherwise, if the first and third measurements are the same, and the second is not, $v$ changes sign, but $s$ remains the same.
-% \item In all other cases, the state for the current round is computed as the sum of $s+v$, bounded between $-1$ and $1$.
-% \item If the state $s$ reaches a boundary, $v$ is reset to $-s$.
-% \end{itemize}
+In order to do so, we need to define a stabilizer triplet state and an algorithm for the evolution of this state based on a moving window of triplets of measure qubit states --- see Algorithm~\ref{alg:state_evolution} for the subroutine used to produce the states. Note this algorithm also computes a set of change values that are used for internal book-keeping and then discarded.
 
 \begin{algorithm}
-\caption{State evolution}
-\label{alg:state_evolution}
+\caption{Triplet state evolution}
 \begin{algorithmic}[1]
-\For{each error correction cycle}
-    \State measure qubits start with a state $s=-1$ and a change vector $v=1$.
-    \If{the window of triplets contains identical measurements}    
-        \State $s$ and $v$ do not change
+\For{triplets of rounds with a time stride of one round}
+  \For{each measure qubit}
+    \If{this is the first triplet}
+      \State initialize the triplet state as $s=-1$ and a change vector $v=1$.
+    \EndIf
+    \If{the triplet contains identical measurements}
+      \State $s$ and $v$ do not change.
     \Else
-        \If{the first and third measurements are the same, and the second is not} 
-            \State $v$ changes sign, but $s$ remains the same.
-        \Else
-            \State the state for the current round is computed as the sum of $s+v$, bounded between $-1$ and $1$.
-        \EndIf
+      \If{the first and third measurements are the same} 
+        \State $v$ changes sign, but $s$ remains the same.
+      \Else
+        \State update the state as $s+v$ and bound between $-1$ and $1$.
+      \EndIf
     \EndIf
-    \If{the state $s$ reaches a boundary}
-        \State $v$ is reset to $-s$.
+    \If{the state $s$ reaches the boundaries $\pm1$}
+      \State $v$ is reset to $-s$.
     \EndIf
+  \EndFor
 \EndFor
 \end{algorithmic}
+\label{alg:state_evolution}
 \end{algorithm}
-
 
 For illustration, here are a few examples of triplet state evolutions from measure qubit sequences for arbitrary individual measure qubits:
 \begin{itemize}
