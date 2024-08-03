@@ -149,12 +149,13 @@ An example set of such triplet states and accompanying detector events are also 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[htb]
 \centering
-\includegraphics[width=0.9\textwidth]{states_d5_r5_event0.pdf} \\
-\includegraphics[width=0.9\textwidth]{det_evts_d5_r5_event0.pdf}
+~~~~~~~~\includegraphics[width=0.9\textwidth,left]{stabilizers_d5_r5_event0.pdf} \\
+\includegraphics[width=0.7573\textwidth,left]{det_evts_d5_r5_event0.pdf} \\
+~\includegraphics[width=0.5804\textwidth,left]{states_d5_r5_event0.pdf}
 \ccaption
-{Measure qubit triplet states and detector events}
+{Comparison of stabilizer measurements, detector events, and triplet states}
 {
-Displayed are the triplet states (top) and detector events (bottom) that are constructed from $r=5$ rounds of stabilizer measurements over the 24 measure qubits of a $d=5$ code. The horizontal axis in both panels is divided by dotted lines for each measure qubit, and the 3 (4) successive triplet states (detector events) are coded with different colors. The triplet states are interpreted as no error ($s=-1$), possible error ($s=0$), and certain error ($s=1$). Detector events are interpreted as having no detection ($e=0$) or having detected an error ($e=1$).
+Displayed are the stabilizer measurements (top), detector events (middle), and triplet states (bottom) from $r=5$ rounds of stabilizer measurements over the 24 measure qubits of a $d=5$ code. The horizontal axis in all panels is divided by dotted lines for each measure qubit, and the successive stabilizer measurements (5 measurements), detector events (4 \type{C} events), and (3) triplet states are coded with different colors. The detector events are interpreted as having no detection ($e=0$) or having detected an error ($e=1$), and the triplet states are interpreted as no error ($s=-1$), possible error ($s=0$), and certain error ($s=1$).
 }
 \label{fig:d5r5states}
 \end{figure*}
@@ -163,29 +164,24 @@ Displayed are the triplet states (top) and detector events (bottom) that are con
 When converting the ensemble of states at each round into an embedded input vector of probabilities, we consider pairs of $(s_i, s_j)$ with all $j\leq i$ (of which there are $m^2\left(m^2-1\right)/2$ pairs for a distance-$m$ code). 
 This quadratic embedding representation replaces the stabilizer measurement embedder discussed in Section~\ref{sec:kernels-r3} while keeping the detector event embedder and the succeeding dense layer, which produces the final kernel output, the same.
 We define a function $f_s$ such that when $i=j$, \ie, $f_s(s_i, s_i)$:
-%, the probabilities 1, $p_i$, and 0 are assigned to states 1, 0, and -1, respectively. 
-\begin{align*}
+\begin{equation}
+\begin{aligned}
 f_s(1,1) &= 1 \\
 f_s(0,0) &= p_i \\
 f_s(-1,-1) &= -1
-\end{align*}
-% For $i \neq j$, the probabilities
-% 1,
-% $p_{ij,1}$,
-% $p_{ij,1} \times p_{ij,2}$,
-% $p_{ij,1} \times \left(p_{ij,3} + p_{ij,2} \times \left(1-p_{ij,3}\right)\right)$,
-% $p_{ij,1} \times \left(p_{ij,4} + p_{ij,2} \times \left(1-p_{ij,4}\right)\right)$,
-% and 0
-% are assigned to the permutation of states (1,1), (1,0), (0,-1), (1,-1), (0,0), and (-1,-1), respectively.
+\end{aligned}
+\end{equation}
 When $i \neq j$, we have:
-\begin{align*}
+\begin{equation}
+\begin{aligned}
 f_s(1,1) &= 1 \\
 f_s(1,0) &= p_{ij,0} \\
 f_s(0,-1) &= p_{ij,0} \times p_{ij,1} \\
 f_s(1,-1) &= p_{ij,0} \times \left(p_{ij,2} + p_{ij,1} \times \left(1-p_{ij,2}\right)\right) \\
 f_s(0,0) &= p_{ij,0} \times \left(p_{ij,3} + p_{ij,1} \times \left(1-p_{ij,3}\right)\right) \\
 f_s(-1,-1) &= 0
-\end{align*}
+\end{aligned}
+\end{equation}
 Here, the parameters $p_i$ and $p_{ij,\mu}$ are trainable $p$-like NN parameters. In order to avoid the scaling of the number of parameters by a leading factor of $d^4$, we construct this embedding for each kernel separately, \ie, $m=k$, which is a fixed number, instead of $m=d$, which could be significantly larger than $k$. As in other embedding layers, these parameters are also required to respect the rotational symmetry of the type-4 kernels.
 
 The probabilistic output $\vec{p}$ of this triplet state embedder is converted to $2\vec{p}-1$ and combined with the output of the detector event embedder before passing through the dense layer of a kernel for final kernel output processing. We will see further in Section~\ref{sec:rcnn} how the triplet state embedder is placed within the recurrent NN structure.
