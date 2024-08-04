@@ -25,9 +25,9 @@ The inputs are regrouped into kernels based on the spatial positions of the meas
 \centering
 \includegraphics[width=0.9\textwidth]{RCNN_layer_progression_d3_r6.pdf}
 \ccaption
-{Layer progression in the recurrent NN architecture}
+{Temporal progression of the recurrent NN architecture}
 {
-Illustrated is an example for a memory experiment over the logical $Z_L$ observable in an arbitrary distance-$d$ surface code with $r=6$ rounds. Each column of circles marks a different stabilizer measurement round, with the circles corresponding to the readings from the $X$ or $Z$ measure qubits, $\vec{m}_t$ for $0\leq t \leq r-1$. The horizontal red lines mark detector events that check for the consistency of measure qubit readings, $\vec{e}_t$ for $1 \leq t \leq r-1$, and the vertical red lines next to the $Z$ measure qubit readings mark the unique detector events associated with these readings at the beginning, $\vec{e}_0$, and end of the memory experiment, $\vec{e}_{r}$.
+Illustrated is the temporal progression for a memory experiment over the logical $Z_L$ observable in an arbitrary distance-$d$ surface code with $r=6$ rounds. Each column of circles marks a different stabilizer measurement round, with the circles corresponding to the readings from the $X$ or $Z$ measure qubits, $\vec{m}_t$ for $0\leq t \leq r-1$. The horizontal red lines mark \type{C} detector events, $\vec{e}_t$ for $1 \leq t \leq r-1$, and the vertical red lines next to the $Z$ measure qubit readings mark \type{S} detector events at the beginning, $\vec{e}_0$, and the end of the memory experiment, $\vec{e}_{r}$.
 Each bracket at the bottom corresponds to a different pass in the recurrent architecture, with the extent of the brackets demarcating the measure qubit readings and detector events that are used as input features.
 The initialization layer, $\mathcal{L}_I$ (magenta), provides an initial error state $\vec{z}^{\,\prime\prime}_0$ from $\vec{m}_0$, $\vec{m}_1$, $\vec{e}_0$, and $\vec{e}_1$.
 The lead-in layer, $\mathcal{L}_L$ (green), updates the error state to $\vec{z}^{\,\prime\prime}_1$ using the first available triplet stabilizer state parametrization from $\vec{m}_{0 \text{---} 2}$, $\vec{e}_1$ and $\vec{e}_2$, and the state $\vec{z}^{\,\prime\prime}_0$.
